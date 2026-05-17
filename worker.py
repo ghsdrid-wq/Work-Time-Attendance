@@ -2,6 +2,19 @@ import pandas as pd
 import math
 from datetime import time
 
+SCAN_IN_DEVICES = (
+    'ADMIN99900401',
+    'ADMIN99900403',
+)
+SCAN_OUT_DEVICES = (
+    'ADMIN99900402',
+    'ADMIN99900404',
+)
+DEVICE_SCAN_MAP = {
+    **{device: 'IN' for device in SCAN_IN_DEVICES},
+    **{device: 'OUT' for device in SCAN_OUT_DEVICES},
+}
+
 def parse_hhmm(hhmm: str) -> float:
     try:
         hh, mm = hhmm.split(":")
@@ -45,10 +58,7 @@ def process(input_path, output_path,
     # ---------------------------
     # 2) Mark IN / OUT
     # ---------------------------
-    df['scan'] = df['device'].map({
-        'ADMIN99900401': 'IN',
-        'ADMIN99900402': 'OUT'
-    })
+    df['scan'] = df['device'].map(DEVICE_SCAN_MAP)
 
     df_in = df[df['scan'] == 'IN'].sort_values(['emp_code', 'datetime'])
     df_out = df[df['scan'] == 'OUT'].sort_values(['emp_code', 'datetime'])
@@ -84,6 +94,8 @@ def process(input_path, output_path,
                         "supplier": row.get("supplier",""),
                         "emp_code": emp,
                         "emp_name": row.get("emp_name",""),
+                        "scan_in": row.get("device", ""),
+                        "scan_out": row_out.get("device", ""),
                         "time_in": row["datetime"],
                         "time_out": row_out["datetime"],
                         "status": "ปกติ"
@@ -94,6 +106,8 @@ def process(input_path, output_path,
                             "supplier": row.get("supplier",""),
                             "emp_code": emp,
                             "emp_name": row.get("emp_name",""),
+                            "scan_in": row.get("device", ""),
+                            "scan_out": "",
                             "time_in": row["datetime"],
                             "time_out": pd.NaT,
                             "status": "ไม่พบเวลาออก"
@@ -115,6 +129,8 @@ def process(input_path, output_path,
                         "supplier": row.get("supplier",""),
                         "emp_code": emp,
                         "emp_name": row.get("emp_name",""),
+                        "scan_in": "",
+                        "scan_out": row.get("device", ""),
                         "time_in": pd.NaT,
                         "time_out": row["datetime"],
                         "status": "ไม่พบเวลาเข้า"
@@ -135,8 +151,11 @@ def process(input_path, output_path,
     # ---------------------------
     # Add scan info
     # ---------------------------
-    result['scan_in'] = 'ADMIN99900401'
-    result['scan_out'] = 'ADMIN99900402'
+    for scan_column in ['scan_in', 'scan_out']:
+        if scan_column not in result.columns:
+            result[scan_column] = ''
+        else:
+            result[scan_column] = result[scan_column].fillna('')
 
     # ---------------------------
     # Work hours & OT

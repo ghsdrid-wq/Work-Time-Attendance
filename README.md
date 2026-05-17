@@ -122,7 +122,9 @@ Export Excel Report
 | Device | Result |
 |---|---|
 | ADMIN99900401 | IN |
+| ADMIN99900403 | IN |
 | ADMIN99900402 | OUT |
+| ADMIN99900404 | OUT |
 
 ---
 
